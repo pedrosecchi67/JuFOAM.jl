@@ -103,8 +103,6 @@ module Stash
                 end
             end
         end
-
-        fetch(s)
     end
 
 end
