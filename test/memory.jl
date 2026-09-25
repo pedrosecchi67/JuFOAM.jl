@@ -26,7 +26,7 @@ begin
 
             _, prof = @memory_profile 1.0 begin
                 msh = PolyhedralMesh(
-                    Float64[0.0, 0.0, 0.0], Float64[1.0, 1.0, 1.0], (Nside, Nside, Nside);
+                    Float32[0.0, 0.0, 0.0], Float32[1.0, 1.0, 1.0], (Nside, Nside, Nside);
                     families = [
                         "inlet" => [(1, false), (2, false), (2, true), (3, false), (3, true)],
                         "outlet" => [(1, true)]
