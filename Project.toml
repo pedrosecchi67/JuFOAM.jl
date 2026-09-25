@@ -1,0 +1,22 @@
+name = "JuFOAM"
+uuid = "7f030f63-d69b-426d-831a-d99220375548"
+version = "0.1.0"
+authors = ["pedrosecchi67 <pedrosecchimail@gmail.com>"]
+
+[deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
+
+[compat]
+Distributed = "1.11.0"
+DocStringExtensions = "0.9.5"
+KernelAbstractions = "0.9.42"
+LinearAlgebra = "1.13.0"
+NearestNeighbors = "0.4.29"
+UUIDs = "1.11.0"
+WriteVTK = "1.22.0"
