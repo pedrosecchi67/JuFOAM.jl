@@ -94,9 +94,13 @@ module Stash
             return
         end
 
-        s = @spawnat pid begin
-            if haskey(_STASH, key)
-                delete!(_STASH, key)
+        s = Base.invokelatest() do 
+            @async begin
+                @spawnat pid begin
+                    if haskey(_STASH, key)
+                        delete!(_STASH, key)
+                    end
+                end
             end
         end
 
