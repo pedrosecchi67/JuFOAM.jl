@@ -98,7 +98,7 @@ end
 
 If `lazy_conversion = true`, the domain's geometric information is converted to the backend at each residual calculation function call and discarded at its end to avoid overloading GPU VRAM in single-GPU systems.
 
-With serial, non-partitioned domains, one may also perform backend conversion and port the entire domain to the backend at a time:
+With serial, non-partitioned domains, one may also perform backend conversion and port the entire domain to the backend at once:
 
 ```julia
 dom = to_backend(
