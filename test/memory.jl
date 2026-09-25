@@ -17,6 +17,8 @@ begin
         for nit = 1:2
             @info "Iteration $nit..."
 
+            local N
+
             N = 2_000_000
             Nside = N ^ (1.0f0 / 3) |> ceil |> Int64
 
