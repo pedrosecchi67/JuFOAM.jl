@@ -1360,7 +1360,7 @@ module JuFOAM
         families...;
         partitioned::Bool = false,
         max_partition_size::Int = 100_000,
-        order::Int = 2,
+        order::Int = 1,
         workers::Vector{Int64} = Int64[],
         conv_to_backend = identity,
         conv_from_backend = identity,
