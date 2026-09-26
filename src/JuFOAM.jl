@@ -615,7 +615,7 @@ module JuFOAM
         face_normals::AbstractMatrix{Tf},
         families...;
         max_partition_size::Int = 100_000,
-        order::Int = 2,
+        order::Int = 1,
         workers::Vector{Int64} = Int64[],
         conv_to_backend = identity,
         conv_from_backend = identity,
@@ -1349,7 +1349,8 @@ module JuFOAM
     Check out `JuFOAM.Solver.FAS!` to use them for PDE solutions!
 
     `n_coarsening_iter` is the number of p-METIS coarsening iterations
-    per level. If absent, defaults to the dimensionality of the domain.
+    per level. If absent, defaults to the dimensionality of the domain
+    times two (factor of 4 for grid spacing).
     """
     function MultigridDomain(
         n_levels::Int, 
@@ -1359,7 +1360,7 @@ module JuFOAM
         face_normals::AbstractMatrix{Tf},
         families...;
         partitioned::Bool = false,
-        max_partition_size::Int = 100_000,
+        max_partition_size::Int = 250_000,
         order::Int = 1,
         workers::Vector{Int64} = Int64[],
         conv_to_backend = identity,
@@ -1368,7 +1369,7 @@ module JuFOAM
         n_coarsening_iter::Int = 0,
     ) where {Tf <: AbstractFloat, Ti <: Integer}
         if n_coarsening_iter == 0
-            n_coarsening_iter = size(face_normals, 2)
+            n_coarsening_iter = size(face_normals, 2) * 2
         end
 
         to_domain = (a...) -> (

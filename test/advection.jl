@@ -72,7 +72,7 @@ begin
     end
 
     dom, coarse_doms, coarseners, prolongators = MultigridDomain(
-        4, msh; 
+        3, msh; 
         max_partition_size = 2000)
 
     f = (l, u) -> begin
@@ -93,7 +93,7 @@ begin
         FAS!(
             f, u;
             coarseners = coarseners, prolongators = prolongators,
-            n_iter = 10, n_cycles = 4, rtol = 0.01f0
+            n_iter = 20, n_cycles = 4, rtol = 0.01f0
         )
     end
 

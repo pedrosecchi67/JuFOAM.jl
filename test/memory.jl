@@ -3,12 +3,11 @@ begin
 
     tests = [
         "partitioned" => (a...) -> PartitionedDomain(
-            a...; max_partition_size = 100_000,
+            a...
         ),
         "serial" => (a...) -> Domain(a...),
         "multigrid" => (a...) -> MultigridDomain(
-            4, a...; partitioned = true,
-            max_partition_size = 100_000,
+            3, a...; partitioned = true,
         ),
     ]
 
@@ -26,7 +25,7 @@ begin
 
             _, prof = @memory_profile 1.0 begin
                 msh = PolyhedralMesh(
-                    Float32[0.0, 0.0, 0.0], Float32[1.0, 1.0, 1.0], (Nside, Nside, Nside);
+                    Float64[0.0, 0.0, 0.0], Float64[1.0, 1.0, 1.0], (Nside, Nside, Nside);
                     families = [
                         "inlet" => [(1, false), (2, false), (2, true), (3, false), (3, true)],
                         "outlet" => [(1, true)]
