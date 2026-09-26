@@ -28,24 +28,21 @@ begin
 
             Base.GC.gc()
 
-            _, prof = @memory_profile 1.0 begin
-                msh = PolyhedralMesh(
+            _, prof = @memory_profile 0.1 begin
+                @info "Processing domain for $N-element mesh..."
+
+                r = PolyhedralMesh(
                     Float64[0.0, 0.0, 0.0], Float64[1.0, 1.0, 1.0], (Nside, Nside, Nside);
                     families = [
                         "inlet" => [(1, false), (2, false), (2, true), (3, false), (3, true)],
                         "outlet" => [(1, true)]
                     ]
-                )
+                ) |> foo
 
-                @info "Done generating $N-element mesh"
-                @info "Processing domain..."
-
-                let r = foo(msh)
-                    if test_name == "partitioned"
-                        finalize(r)
-                    elseif test_name == "multigrid"
-                        finalize(r[1])
-                    end
+                if test_name == "partitioned"
+                    finalize(r)
+                elseif test_name == "multigrid"
+                    finalize(r[1])
                 end
 
                 Base.GC.gc()
