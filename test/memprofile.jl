@@ -1,3 +1,17 @@
+using Distributed
+
+function _get_gc_live_all()
+    live = 0
+    for pid in procs()
+        fut = @spawnat pid begin
+            Base.gc_live_bytes()
+        end
+        live += fetch(fut)
+    end
+
+    live
+end
+
 """
 ```
     macro memory_profile(
@@ -21,7 +35,7 @@ macro memory_profile(
 
         while !istaskdone(task)
             push!(rtime, time())
-            push!(rss, Base.gc_live_bytes())
+            push!(rss, _get_gc_live_all())
 
             sleep($(esc(interval)))
         end

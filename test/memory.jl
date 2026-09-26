@@ -1,13 +1,18 @@
 begin
     @info "Begining memory usage test..."
 
+    wrks = addprocs(2)
+    @everywhere using JuFOAM
+
     tests = [
-        "partitioned" => (a...) -> PartitionedDomain(
-            a...
-        ),
         "serial" => (a...) -> Domain(a...),
+        "partitioned" => (a...) -> PartitionedDomain(
+            a...;
+            workers = wrks,
+        ),
         "multigrid" => (a...) -> MultigridDomain(
             3, a...; partitioned = true,
+            workers = wrks,
         ),
     ]
 
@@ -61,4 +66,6 @@ begin
             """
         end
     end
+
+    rmprocs(wrks)
 end
