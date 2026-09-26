@@ -614,7 +614,7 @@ module JuFOAM
         face_centers::AbstractMatrix{Tf},
         face_normals::AbstractMatrix{Tf},
         families...;
-        max_partition_size::Int = 100_000,
+        max_partition_size::Int = 250_000,
         order::Int = 1,
         workers::Vector{Int64} = Int64[],
         conv_to_backend = identity,
@@ -1360,7 +1360,7 @@ module JuFOAM
         face_normals::AbstractMatrix{Tf},
         families...;
         partitioned::Bool = false,
-        max_partition_size::Int = 100_000,
+        max_partition_size::Int = 250_000,
         order::Int = 1,
         workers::Vector{Int64} = Int64[],
         conv_to_backend = identity,
