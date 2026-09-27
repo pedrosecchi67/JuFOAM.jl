@@ -29,13 +29,13 @@ $TYPEDSIGNATURES
 
 Standard constructor for polyhedral mesh
 """
-function PolyhedralMesh{Tf, Ti}(
+function PolyhedralMesh(
     points::AbstractMatrix{Tf},
     faces::AbstractVector{Vector{Ti}},
     cells::AbstractVector{Vector{Ti}},
     families::AbstractDict,
 ) where {Tf <: AbstractFloat, Ti <: Integer}
-    new(points, faces, cells, families,
+    PolyhedralMesh{Tf, Ti}(points, faces, cells, families,
         Dict{String, AbstractMatrix}(),
         Dict{String, AbstractVector}())
 end
