@@ -22,17 +22,22 @@ struct PolyhedralMesh{Tf <: AbstractFloat, Ti <: Integer}
     families::Dict{String, AbstractVector}
     boundary_projections::Dict{String, AbstractMatrix}
     image_point_offsets::Dict{String, AbstractVector}
+end
 
-    function PolyhedralMesh{Tf, Ti}(
-        points::AbstractMatrix{Tf},
-        faces::AbstractVector{Vector{Ti}},
-        cells::AbstractVector{Vector{Ti}},
-        families::AbstractDict,
-    ) where {Tf <: AbstractFloat, Ti <: Integer}
-        new(points, faces, cells, families,
-            Dict{String, AbstractMatrix}(),
-            Dict{String, AbstractVector}())
-    end
+"""
+$TYPEDSIGNATURES
+
+Standard constructor for polyhedral mesh
+"""
+function PolyhedralMesh{Tf, Ti}(
+    points::AbstractMatrix{Tf},
+    faces::AbstractVector{Vector{Ti}},
+    cells::AbstractVector{Vector{Ti}},
+    families::AbstractDict,
+) where {Tf <: AbstractFloat, Ti <: Integer}
+    new(points, faces, cells, families,
+        Dict{String, AbstractMatrix}(),
+        Dict{String, AbstractVector}())
 end
 
 """
