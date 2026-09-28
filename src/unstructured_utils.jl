@@ -223,11 +223,12 @@ end
 $TYPEDSIGNATURES
 
 Merge multiple polyhedral meshes into one according to given
-point merging tolerance.
+point merging tolerance. If the tolerance is 0 (default), the meshes
+are simply concatenated with no point merging.
 """
 function PolyhedralMesh(
     grids::PolyhedralMesh...;
-    tolerance::Real = 1f-7,
+    tolerance::Real = 0.0f0,
 )
     ndim = size(grids[1].points, 2)
     
@@ -242,38 +243,53 @@ function PolyhedralMesh(
     )
     Tf = typeof(tolerance)
 
-    points, point_keys = let pointhash = Dict{
-        NTuple{ndim, Int64}, Ti
-    }()
+    points = point_keys = nothing
+    if tolerance > 0
+        points, point_keys = let pointhash = Dict{
+            NTuple{ndim, Int64}, Ti
+        }()
+            n0 = Ti(0)
+            point_keys = Vector{Ti}[]
+
+            push_point! = pt -> let tag = tuple(
+                Int64.(round.(pt ./ tolerance))...
+            )
+                if haskey(pointhash, tag)
+                    return pointhash[tag]
+                end
+
+                n0 += one(Ti)
+                pointhash[tag] = n0
+
+                n0
+            end
+
+            for grid in grids
+                indices = map(push_point!, eachrow(grid.points))
+                push!(point_keys, indices)
+            end
+
+            points = Matrix{Tf}(undef, n0, ndim)
+            for (grid, key) in zip(grids, point_keys)
+                for (pt, i) in zip(eachrow(grid.points), key)
+                    points[i, :] .= pt
+                end
+            end
+
+            (points, point_keys)
+        end
+    else
+        points = reduce(vcat, [grid.points for grid in grids])
+
         n0 = Ti(0)
-        point_keys = Vector{Ti}[]
+        point_keys = [
+            begin
+                rng = (n0 + one(Ti)):(n0 + Ti(size(grid.points, 1)))
+                n0 += Ti(size(grid.points, 1))
 
-        push_point! = pt -> let tag = tuple(
-            Int64.(round.(pt ./ tolerance))...
-        )
-            if haskey(pointhash, tag)
-                return pointhash[tag]
-            end
-
-            n0 += one(Ti)
-            pointhash[tag] = n0
-
-            n0
-        end
-
-        for grid in grids
-            indices = map(push_point!, eachrow(grid.points))
-            push!(point_keys, indices)
-        end
-
-        points = Matrix{Tf}(undef, n0, ndim)
-        for (grid, key) in zip(grids, point_keys)
-            for (pt, i) in zip(eachrow(grid.points), key)
-                points[i, :] .= pt
-            end
-        end
-
-        (points, point_keys)
+                collect(rng)
+            end for grid in grids
+        ]
     end
 
     faces, face_keys = let facehash = Dict{Tuple, Ti}()
