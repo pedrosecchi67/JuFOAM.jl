@@ -319,6 +319,40 @@ FAS!(
 )
 ```
 
+## Interpolation to probe points
+
+```julia
+# probe points:
+Xc = [
+    0.5 0.7;
+    0.2 0.2;
+    0.3 0.4
+]
+
+intp = Interpolator(dom, Xc)
+
+# field prop. array
+u = rand(length(dom))
+
+# interpolation to points in rows of Xc
+@show intp(u)
+```
+
+## Chimera grid
+
+```julia
+# obtain interpolator for chimera grid communication faces:
+chimera = ChimeraInterpolator(dom, "ORPHAN")
+
+# at residual calculation:
+dom(u, "ORPHAN" => chimera(u)) do dom, u, (bname, uchi)
+    uf = at_faces(dom, u)
+
+    bdry = dom.boundaries[bname]
+    at_boundary(bdry, uf) .= uchi # impose as BC
+end
+```
+
 ## CFD utilities
 
 Check out the docstrings for the following functions and structs:

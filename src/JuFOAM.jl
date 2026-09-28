@@ -6,7 +6,7 @@ module JuFOAM
 
     include("nninterp.jl")
     using .NNInterpolator
-    using .NNInterpolator: KDTree
+    using .NNInterpolator: KDTree, IDW_weights, linear_weights
     using .NNInterpolator.ArrayAccumulator
     using .NNInterpolator.ArrayAccumulator.ArrayBackends
 
@@ -33,13 +33,17 @@ module JuFOAM
     include("solver.jl")
     using .Solver
 
+    include("quadrant_rule.jl")
+    using .QuadrantNN
+
     export Domain, PartitionedDomain, AbstractDomain,
         vtk_grid, vtk_save, vtk_multiblock,
         at_boundary, at_images, interp2boundary,
         at_owners, at_neighbors, at_faces, green_gauss,
         gradient, divergent, face_gradient, MUSCL, JST_sensor,
         to_backend, 
-        MultigridDomain, Interpolator
+        MultigridDomain, 
+        Interpolator, ChimeraInterpolator
 
     """
     $TYPEDFIELDS
@@ -480,6 +484,7 @@ module JuFOAM
         Tf, Ti
     }
         n_cells::Int64
+        n_dims::Int64
         part_map::Dict{Int64, Tuple{Int64, UUID, Vector{Ti}, Int64}}
         family_map::Dict{String, Vector{Tuple{Vector{Ti}, Int64}}}
         conv_to_backend::Any
@@ -626,6 +631,7 @@ module JuFOAM
             workers = [myid()]
         end
         mypid = ipart -> workers[(ipart - 1) % length(workers) + 1]
+        ndim = size(face_centers, 2)
 
         parts = domain_partitions(
             max_partition_size,
@@ -755,7 +761,7 @@ module JuFOAM
         end
 
         pdom = PartitionedDomain{Tf, Ti}(
-            ncells, part_dict, boundary_face_selector,
+            ncells, ndim, part_dict, boundary_face_selector,
             conv_to_backend, conv_from_backend, lazy_conversion
         )
 
@@ -982,6 +988,13 @@ module JuFOAM
     Get number of spatial dimensions in domain
     """
     Base.ndims(dom::Domain) = size(dom.centers, 2)
+
+    """
+    $TYPEDSIGNATURES
+
+    Get number of spatial dimensions in domain
+    """
+    Base.ndims(dom::PartitionedDomain) = dom.n_dims
     
     """
     $TYPEDSIGNATURES
@@ -1498,6 +1511,55 @@ module JuFOAM
 
         Interpolator(X, Xc, tree; first_index = true,
             k = k, linear = linear)
+    end
+
+    """
+    $TYPEDSIGNATURES
+
+    Obtain interpolator from cell data for the entire domain to
+    the faces of a given family, to be used for Chimera grid applications.
+    Returns a callable object.
+
+    Uses quadrant/octant rule for the selection of stencil points (i.e.
+    gets the closest point in each quadrant stemming from the query point/face
+    center).
+    
+    Uses IDW if `linear = false` (default) or linear interpolation if `linear = true`.
+    """
+    function ChimeraInterpolator(
+        dom::AbstractDomain{Tf, Ti},
+        family::String; linear::Bool = false
+    ) where {Tf, Ti}
+        ndim = ndims(dom)
+
+        X = Matrix{Tf}(undef, length(dom), ndim)
+        Xc = Matrix{Tf}(undef, length(dom, family), ndim)
+        dom(X, family => Xc) do dom, X, (bname, Xc)
+            X .= dom.centers
+
+            bdry = dom.boundaries[bname]
+            Xc .= at_boundary(bdry, dom.face_centers)
+            ;
+        end
+
+        graph = quadrant_rule_graph(permutedims(X), permutedims(Xc)) |> x -> map(
+            xx -> Ti.(xx), x
+        )
+        weights = (
+            linear ? 
+            map(
+                i -> linear_weights(
+                    view(X, graph[i], :)', view(X, i, :)
+                ), 1:length(graph)
+            ) :
+            map(
+                i -> IDW_weights(
+                    view(X, graph[i], :)', view(X, i, :)
+                ), 1:length(graph)
+            )
+        )
+
+        Accumulator(graph, weights; first_index = true)
     end
 
 end
