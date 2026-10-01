@@ -192,6 +192,14 @@ msh2 = PolyhedralMesh(
 
 msh = PolyhedralMesh(
     msh1, msh2; tolerance = 1f-7 # for point and face merging
+) # if tolerance = 0 (default), no point merging is performed
+```
+
+3D polyhedral meshes may also be read from CGNS (HDF5 serialization):
+
+```julia
+msh = PolyhedralMesh(
+    "mesh.cgns"
 )
 ```
 

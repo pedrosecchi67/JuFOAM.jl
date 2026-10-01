@@ -1,10 +1,13 @@
 module UnstructuredGrids
 
-    export PolyhedralMesh,
-        set_boundary_projections!,
-        set_image_distances!,
-        face_information, boundary_information,
-        vtk_grid, vtk_save, vtk_multiblock
+include("cgnsreader.jl")
+using .CGNSReader
+
+export PolyhedralMesh,
+    set_boundary_projections!,
+    set_image_distances!,
+    face_information, boundary_information,
+    vtk_grid, vtk_save, vtk_multiblock
 
 using DocStringExtensions
 
@@ -680,5 +683,14 @@ WriteVTK.vtk_grid(
     fname, permutedims(msh.points), msh.faces, msh.cells; 
     vtm = vtm,
 )
+
+"""
+$TYPEDSIGNATURES
+
+Read CGNS file to polyhedral mesh
+"""
+PolyhedralMesh(cgns_file::String) = let nt = read_cgns(cgns_file)
+    PolyhedralMesh(nt.points, nt.faces, nt.cells, nt.families)
+end
 
 end
