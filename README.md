@@ -394,6 +394,7 @@ using JuFOAM.Turbulence
 
 wall_function
 shear_rate
+vorticity_magnitude
 Smagorinsky_νSGS
 WALE_νSGS
 Wray_Agarwal

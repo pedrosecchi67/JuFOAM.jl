@@ -102,7 +102,7 @@ module Turbulence
     """
     $TYPEDSIGNATURES
 
-    Obtain `sqrt(2 * SijSij)`.
+    Obtain `sqrt(2 * SijSij)`, if `Sij = (∇u + ∇uᵀ) / 2` is the strain-rate tensor.
 
     `velocity_gradient` is a matrix such that `velocity_gradient[i, j]`
     indicates the gradient of vel. component `i` along dimension `j`.
@@ -121,6 +121,32 @@ module Turbulence
         end
 
         @. sqrt(2 * SijSij)
+    end
+
+    export vorticity_magnitude
+
+    """
+    $TYPEDSIGNATURES
+
+    Obtain `sqrt(2 * WijWij)`, if `Wij = (∇u - ∇uᵀ) / 2`.
+
+    `velocity_gradient` is a matrix such that `velocity_gradient[i, j]`
+    indicates the gradient of vel. component `i` along dimension `j`.
+    """
+    function vorticity_magnitude(
+        velocity_gradient::AbstractMatrix
+    )
+        WijWij = similar(velocity_gradient[1, 1])
+        WijWij .= 0
+        for i = 1:size(velocity_gradient, 1)
+            for j = 1:size(velocity_gradient, 2)
+                WijWij .+= (
+                    (velocity_gradient[i, j] .- velocity_gradient[j, i]) ./ 2
+                ) .^ 2
+            end
+        end
+
+        @. sqrt(2 * WijWij)
     end
 
     export Smagorinsky_νSGS
