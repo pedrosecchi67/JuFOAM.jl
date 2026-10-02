@@ -28,9 +28,12 @@ begin
     )
     @assert intp(u) ≈ [0.75]
 
+    d = wall_distances(dom, "surface")
+
     vtk = vtk_grid("unstructured_test/volume", msh)
     vtk["u"] = u
     vtk["p"] = p
+    vtk["d"] = d
     vtk_save(vtk)
 
     vtk = vtk_grid("unstructured_test/surface", msh, "surface")

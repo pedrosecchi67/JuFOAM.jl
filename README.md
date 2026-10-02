@@ -361,6 +361,12 @@ dom(u, "ORPHAN" => chimera(u)) do dom, u, (bname, uchi)
 end
 ```
 
+## Wall distances
+
+```julia
+d = wall_distances(dom, "family1", "family2")
+```
+
 ## CFD utilities
 
 Check out the docstrings for the following functions and structs:

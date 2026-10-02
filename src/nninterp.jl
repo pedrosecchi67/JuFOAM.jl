@@ -12,7 +12,7 @@ module NNInterpolator
 
     function IDW_weights(X::AbstractMatrix, x::AbstractVector)
         w = sum((X .- x) .^ 2; dims = 1) |> vec
-        @. w = 1.0f0 / (w + 1f-14)
+        @. w = 1.0f0 / (sqrt(w) + 1f-14)
 
         sw = sum(w)
         @. w / sw

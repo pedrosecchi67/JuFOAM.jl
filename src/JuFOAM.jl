@@ -43,7 +43,8 @@ module JuFOAM
         gradient, divergent, face_gradient, MUSCL, JST_sensor,
         to_backend, 
         MultigridDomain, 
-        Interpolator, ChimeraInterpolator
+        Interpolator, ChimeraInterpolator,
+        wall_distances
 
     """
     $TYPEDFIELDS
@@ -1560,6 +1561,40 @@ module JuFOAM
         )
 
         Accumulator(graph, weights; first_index = true)
+    end
+
+    """
+    $TYPEDSIGNATURES
+
+    Obtain distance to wall families
+    """
+    function wall_distances(
+        dom::AbstractDomain{Tf, Ti}, families::String...
+    ) where {Tf, Ti}
+        face_centers = [
+            fname => zeros(
+                Tf, length(dom, fname), ndims(dom)
+            ) for fname in families
+        ]
+        X = zeros(length(dom), ndims(dom))
+
+        dom(X, face_centers...) do dom, X, fcs...
+            for (fname, fc) in fcs
+                bdry = dom.boundaries[fname]
+                fc .= bdry.projections
+            end
+
+            X .= dom.centers;
+        end
+        
+        face_centers = map(pair -> pair[2], face_centers) |> x -> reduce(vcat, x)
+
+        projs = let intp = Interpolator(face_centers, X; linear = false, k = ndims(dom),
+            first_index = true)
+            intp(face_centers)
+        end
+
+        sum((projs .- X) .^ 2; dims = 2) |> vec |> x -> sqrt.(x)
     end
 
 end
