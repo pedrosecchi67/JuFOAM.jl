@@ -1,6 +1,8 @@
 using JuFOAM
 using JuFOAM.UnstructuredGrids
 
+using Serialization
+
 function get_exponential_spacing(
     x0::Real, x1::Real,
     h0::Real, growth_ratio::Real = 1.1;
@@ -122,3 +124,5 @@ vtk_save(vtk)
 vtk_grid("surface", msh, "wall") |> vtk_save
 
 @show msh.cells |> length
+
+serialize("mesh.ufoam", msh)

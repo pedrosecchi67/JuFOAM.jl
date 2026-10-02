@@ -233,7 +233,7 @@ module Turbulence
 
     ```
     (
-        νₜ = R, # just to make sure you know ;)
+        νₜ = (eddy viscosity),
         νR = (dissipation rate for R),
         S = (source term)
     )
@@ -242,15 +242,19 @@ module Turbulence
     Such that:
 
     ```
-    Rₜ = - ∇⋅(uR) + ∇⋅[(ν + νR) ∇R] + S
+    Rₜ = - ∇⋅(uR) + ∇⋅[νR ∇R] + S
     ```
     """
     function Wray_Agarwal(
+        ν::AbstractVector,
         R::AbstractVector, S::AbstractVector,
         ∇R::AbstractMatrix, ∇S::AbstractMatrix;
         σR::Real = 0.72f0, C₁::Real = 0.0829f0, κ::Real = 0.41f0,
+        Cω::Real = 8.54f0,
     )
         ϵ = eps(eltype(R))
+
+        χ = @. R / ν
 
         C₂ = σR + C₁ / κ ^ 2
 
@@ -259,9 +263,11 @@ module Turbulence
         end
         @. S = min(S, 10.0f0 * R)
 
+        νₜ = @. χ ^ 3 / (χ ^ 3 + Cω ^ 3) * R
+
         (
-            νₜ = R,
-            νR = R .* σR,
+            νₜ = νₜ,
+            νR = R .* σR .+ ν,
             S = S
         )
     end
