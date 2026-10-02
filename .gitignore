@@ -29,3 +29,6 @@ Manifest.toml
 *.vtm
 *.vtr
 *.vti
+
+# grids
+*.ufoam
