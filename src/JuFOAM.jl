@@ -1550,12 +1550,12 @@ module JuFOAM
             linear ? 
             map(
                 i -> linear_weights(
-                    view(X, graph[i], :)', view(X, i, :)
+                    view(X, graph[i], :)', view(Xc, i, :)
                 ), 1:length(graph)
             ) :
             map(
                 i -> IDW_weights(
-                    view(X, graph[i], :)', view(X, i, :)
+                    view(X, graph[i], :)', view(Xc, i, :)
                 ), 1:length(graph)
             )
         )

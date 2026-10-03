@@ -107,10 +107,10 @@ module ArrayAccumulator
     If `first_index` is true upon array construction, works
     along first dimension. Otherwise, works along last dimension (default).
     """
-    (acc::Accumulator)(u::AbstractArray) = (
+    (acc::Accumulator)(u::AbstractArray; f = identity, op = +) = (
         acc.first_index ?
-        mapslices(acc, u; dims = 1) :
-        mapslices(acc, u; dims = ndims(u))
+        mapslices(x -> acc(x; f = f, op = op), u; dims = 1) :
+        mapslices(x -> acc(x; f = f, op = op), u; dims = ndims(u))
     )
 
     """
