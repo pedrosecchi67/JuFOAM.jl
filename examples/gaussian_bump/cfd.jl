@@ -131,7 +131,7 @@ function residual_and_timescale(
                 dims = 2) |> vec |> x -> abs.(x) .+ at_faces(dom, a)
             νf = at_faces(dom, ν)
 
-            dt .= 0.5f0 ./ green_gauss(dom, 
+            dt .= 1.0f0 ./ green_gauss(dom, 
                 λf .+ νf .* cosθ ./ dom.owner_neighbor_distances; 
                 signed = false)
         end
