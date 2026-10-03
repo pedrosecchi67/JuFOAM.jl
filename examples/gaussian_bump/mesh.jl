@@ -58,9 +58,11 @@ end
 
 meshes = []
 
+first_height = 1.4e-5
+
 let (x, y) = get_block(
         get_exponential_spacing(-25.0, 0.0, 1e-3; flip = true),
-        1.4e-5, 5.0; hmax = 0.05,
+        first_height, 5.0; hmax = 0.05,
     )
     PolyhedralMesh(
         x, y;
@@ -74,7 +76,7 @@ end |> x -> push!(meshes, x)
 let (x, y) = get_block(
         get_exponential_spacing(0.0, 0.75, 1e-3; flip = false,
             hmax = 0.01),
-        1.4e-5, 5.0; yfunc = bump_height, hmax = 0.05,
+        first_height, 5.0; yfunc = bump_height, hmax = 0.05,
     )
     PolyhedralMesh(
         x, y;
@@ -88,7 +90,7 @@ end |> x -> push!(meshes, x)
 let (x, y) = get_block(
         get_exponential_spacing(0.75, 1.6, 1e-3; flip = true,
             hmax = 0.01),
-        1.4e-5, 5.0; yfunc = bump_height, hmax = 0.05,
+        first_height, 5.0; yfunc = bump_height, hmax = 0.05,
     )
     PolyhedralMesh(
         x, y;
@@ -101,7 +103,7 @@ end |> x -> push!(meshes, x)
 
 let (x, y) = get_block(
         get_exponential_spacing(1.6, 26.6, 1e-3; flip = false),
-        1.4e-5, 5.0; hmax = 0.05,
+        first_height, 5.0; hmax = 0.05,
     )
     PolyhedralMesh(
         x, y;

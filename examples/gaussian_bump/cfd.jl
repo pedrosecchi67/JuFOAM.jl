@@ -127,10 +127,8 @@ function residual_and_timescale(
         # timescale
         let cosθ = sum(dom.face_normals .* dom.owner_neighbor_directions; 
             dims = 2) |> vec
-            V = sum(uvw .^ 2; dims = 2) |> vec |> x -> sqrt.(x)
-            λ = @. V + a
-            
-            λf = max.(at_owners(dom, λ), at_neighbors(dom, λ))
+            λf = sum(at_faces(dom, uvw) .* dom.face_normals; 
+                dims = 2) |> vec |> x -> abs.(x) .+ at_faces(dom, a)
             νf = at_faces(dom, ν)
 
             dt .= 0.5f0 ./ green_gauss(dom, 
@@ -171,7 +169,18 @@ function residual_and_timescale(
         f .-= viscous_fluxes(fluid, Pf, ∇Pf, dom.face_normals)
 
         # divergent
-        R .= - green_gauss(dom, f)
+        Qdot = - green_gauss(dom, f)
+
+        # evolve state variables, update residuals
+        # to reflect primitive variables in time
+        let Q = primitive2state(fluid, P)
+            Pnew = state2primitive(
+                fluid, Q .+ dt .* Qdot
+            )
+            @. R = (Pnew - P) / dt
+        end
+
+        ;
     end
 
     # apply CFL condition

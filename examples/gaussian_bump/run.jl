@@ -22,7 +22,7 @@ soln = Solution(solv, 1e5, 288.15, [V, 0.0];
 
 
 P = soln.P
-for _ = 1:20
+for _ = 1:1000
     R, dt = residual_and_timescale(solv, soln, P;
         CFL = 0.5, CFL_global = 0.5)
 
@@ -33,11 +33,14 @@ p = view(soln.P, :, 1)
 T = view(soln.P, :, 2)
 uv = view(soln.P, :, 3:4)
 
+ρ = p ./ soln.fluid.R ./ T
+
 vtk = vtk_grid("solution", msh)
 
 vtk["p"] = p
 vtk["T"] = T
 vtk["uv"] = uv'
+vtk["rho"] = ρ
 
 p∞ = soln.P∞[1]
 Cp = pressure_coefficient(soln.fluid, p, p∞, Mach)
