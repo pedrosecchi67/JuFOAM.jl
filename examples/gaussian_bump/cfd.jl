@@ -2,6 +2,7 @@ using JuFOAM
 using JuFOAM.UnstructuredGrids
 using JuFOAM.CFD
 using JuFOAM.Turbulence
+using JuFOAM.Solver
 
 struct Solver
     domain::AbstractDomain
@@ -189,4 +190,61 @@ function residual_and_timescale(
     end
 
     (R, dt)
+end
+
+function solve!(
+    solv::Solver, soln::Solution;
+    CFL::Real = 100.0,
+    CFL_global::Real = 1000.0,
+    n_iter::Int = 10,
+    n_cycles::Int = 10,
+)
+    # calc. source term as difference between high-order and low-order residuals
+    S, Δt = residual_and_timescale(
+        solv, soln, soln.P; high_order = true,
+        CFL = CFL, CFL_global = CFL_global,
+    )
+    residuals = sum(S .^ 2; dims = 1) |> vec |> x -> sqrt.(x)
+
+    S .-= (
+        residual_and_timescale(
+            solv, soln, soln.P; high_order = false
+        )[1]
+    )
+
+    # coarsen time step vectors
+    Δts = [Δt]
+    for coars in solv.coarseners
+        push!(Δts, coars(Δts[end]))
+    end
+
+    Pold = copy(soln.P)
+    Polds = [Pold]
+    for coars in solv.coarseners
+        push!(Polds, coars(Polds[end]))
+    end
+
+    f = (l, P) -> begin
+        dP!dt, dt = residual_and_timescale(solv, soln, P; 
+            high_order = false, multigrid_level = l)
+        if l == 0
+            @. dP!dt += S
+        end
+
+        _dt = Δts[l+1]
+        _Pold = Polds[l+1]
+        R = @. dP!dt * _dt - (P - _Pold)
+        ω = dt ./ _dt ./ 2
+
+        (R, ω)
+    end
+
+    FAS!(
+        f, soln.P;
+        coarseners = solv.coarseners, prolongators = solv.prolongators,
+        n_iter = n_iter, n_cycles = n_cycles,
+        rtol = 1e-2, atol = 0.0,
+    )
+
+    residuals
 end

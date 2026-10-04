@@ -22,11 +22,10 @@ soln = Solution(solv, 1e5, 288.15, [V, 0.0];
 
 
 P = soln.P
-for _ = 1:1000
-    R, dt = residual_and_timescale(solv, soln, P;
-        CFL = 0.5, CFL_global = 0.5)
+for nit = 1:100
+    residuals = solve!(solv, soln)
 
-    @. P += dt * R
+    @show nit residuals
 end
 
 p = view(soln.P, :, 1)
