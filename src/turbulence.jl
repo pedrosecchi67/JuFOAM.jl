@@ -272,6 +272,81 @@ module Turbulence
         )
     end
 
+    export Spallart_Allmaras
+
+    """
+    $TYPEDSIGNATURES
+
+    Spallart-Allmaras one-equation turbulence model.
+
+    `ν` is the kinematic viscosity, `d` is the nearest wall distance,
+    `ν̂`` is the working variable, and `Ω` is the vorticity magnitude.
+
+    The return value is a tuple with entries:
+
+    ```
+    (
+        νₜ = (eddy viscosity),
+        νSA = (dissipation rate),
+        S = (source term)
+    )
+    ```
+
+    Such that the model can be written as:
+
+    ```
+    ν̂ₜ = - ∇⋅(uν̂ ) + ∇⋅[νSA ∇ν̂ ] + S
+    ```
+
+    If cell size `Δ` is provided, the destruction term is modified to its DES form.
+    """
+    function Spallart_Allmaras(
+        ν::AbstractVector, d::AbstractVector, Ω::AbstractVector,
+        ν̂::AbstractVector, ∇ν̂::AbstractMatrix, 
+        Δ::Union{Nothing, AbstractVector} = nothing;
+        σ::Real = 2.0f0 / 3, 
+        Cb1::Real = 0.1355f0, Cb2::Real = 0.622f0,
+        κ::Real = 0.41f0,
+        Cw2::Real = 0.3f0, Cw3::Real = 2.0f0,
+        Cv1::Real = 7.1f0, Ct3::Real = 1.2f0, Ct4::Real = 0.5f0,
+        CDES::Real = 0.65f0,
+    )
+        Cw1 = Cb1 / κ ^ 2 + (1.0f0 + Cb2) / σ
+
+        χ = @. ν̂  / ν
+
+        fv1 = @. χ ^ 3 / (χ ^ 3 + Cv1 ^ 3)
+        fv2 = @. 1.0f0 - χ / (1.0f0 + χ * fv1)
+        ft2 = @. Ct3 * exp(-Ct4 * χ ^ 2)
+
+        Ŝ = @. min(Ω + ν̂  * fv2 / (d * κ) ^ 2, 0.3f0 * Ω)
+
+        r = @. min(ν̂  / (Ŝ * (d * κ) ^ 2), 10.0f0)
+        g = @. r + Cw2 * (r ^ 6 - r)
+
+        fw = @. g * ( (1.0f0 + Cw3 ^ 6) / (g ^ 6 + Cw3 ^ 6) ) ^ (1.0f0 / 6)
+
+        mod2∇ν̃  = sum(∇ν̂ .* ∇ν̂; dims = 2) |> vec
+
+        νₜ = @. ν̂  * fv1
+        νSA = @. (ν + ν̂ ) / σ
+
+        # source term
+        S = @. Cb1 * (1.0f0 - ft2) * Ŝ * ν̂  + mod2∇ν̃  * Cb2 / σ
+        # destruction term
+        d̃ = d
+        if !isnothing(Δ)
+            d̃ = @. min(d, CDES * Δ)
+        end
+        @. S += (- (Cw1 * fw - Cb1 * ft2 / κ ^ 2) * (ν̂  / d̃) ^ 2)
+
+        (
+            νₜ = νₜ,
+            νSA = νSA,
+            S = S
+        )
+    end
+
     export Ducros_sensor
 
     """

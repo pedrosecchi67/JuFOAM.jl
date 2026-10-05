@@ -397,6 +397,7 @@ shear_rate
 vorticity_magnitude
 Smagorinsky_νSGS
 WALE_νSGS
+Spallart_Allmaras
 Wray_Agarwal
 standard_kϵ
 Ducros_sensor
