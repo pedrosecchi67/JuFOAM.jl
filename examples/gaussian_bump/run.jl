@@ -22,7 +22,7 @@ soln = Solution(solv, 1e5, 288.15, [V, 0.0];
 
 
 P = soln.P
-for nit = 1:100
+for nit = 1:1000
     residuals = solve!(solv, soln)
 
     @show nit residuals

@@ -194,7 +194,7 @@ end
 
 function solve!(
     solv::Solver, soln::Solution;
-    CFL::Real = 100.0,
+    CFL::Real = 10.0,
     CFL_global::Real = 1000.0,
     n_iter::Int = 10,
     n_cycles::Int = 10,
