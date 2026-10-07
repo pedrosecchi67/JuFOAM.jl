@@ -20,36 +20,43 @@ solv = Solver(msh)
 soln = Solution(solv, 1e5, 288.15, [V, 0.0];
     μref = μref)
 
+record! = (solv, soln) -> begin
+    p = view(soln.P, :, 1)
+    T = view(soln.P, :, 2)
+    uv = view(soln.P, :, 3:4)
+
+    ρ = p ./ soln.fluid.R ./ T
+    ν = dynamic_viscosity(soln.fluid, T) ./ ρ
+
+    eddy_viscosity_ratio = soln.νₜ ./ ν
+
+    p∞ = soln.P∞[1]
+    Cp = pressure_coefficient(soln.fluid, p, p∞, Mach)
+
+    vtk = vtk_grid("solution", msh)
+
+    vtk["p"] = p
+    vtk["T"] = T
+    vtk["uv"] = uv'
+    vtk["rho"] = ρ
+    vtk["Cp"] = Cp
+    vtk["eddy_viscosity_ratio"] = eddy_viscosity_ratio
+    vtk["wall_distance"] = solv.wall_distance
+
+    vtk_save(vtk)
+end
 
 P = soln.P
 for nit = 1:1000
     residuals = solve!(solv, soln)
     turb_residuals = solve_turb!(solv, soln; CFL = 10.0, CFL_global = 10.0)
 
+    if nit % 20 == 0
+        record!(solv, soln)
+    end
+
     @show nit residuals turb_residuals
 end
 
+record!(solv, soln)
 
-p = view(soln.P, :, 1)
-T = view(soln.P, :, 2)
-uv = view(soln.P, :, 3:4)
-
-ρ = p ./ soln.fluid.R ./ T
-ν = dynamic_viscosity(soln.fluid, T) ./ ρ
-
-eddy_viscosity_ratio = soln.νₜ ./ ν
-
-p∞ = soln.P∞[1]
-Cp = pressure_coefficient(soln.fluid, p, p∞, Mach)
-
-vtk = vtk_grid("solution", msh)
-
-vtk["p"] = p
-vtk["T"] = T
-vtk["uv"] = uv'
-vtk["rho"] = ρ
-vtk["Cp"] = Cp
-vtk["eddy_viscosity_ratio"] = eddy_viscosity_ratio
-vtk["wall_distance"] = solv.wall_distance
-
-vtk_save(vtk)
