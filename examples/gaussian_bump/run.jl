@@ -49,7 +49,7 @@ end
 P = soln.P
 for nit = 1:1000
     residuals = solve!(solv, soln)
-    turb_residuals = solve_turb!(solv, soln; CFL = 10.0, CFL_global = 10.0)
+    turb_residuals = solve_turb!(solv, soln)
 
     if nit % 20 == 0
         record!(solv, soln)
