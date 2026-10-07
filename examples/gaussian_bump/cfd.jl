@@ -406,6 +406,9 @@ function residual_and_timescale_turb(
         end
     end
 
+    # clip residuals to avoid negative values
+    @. r = (max(ν̂  + r * dt, 0.0f0) - ν̂ ) / dt
+
     # apply CFL condition
     let dtmin = minimum(dt)
         @. dt = min(dt * CFL, dtmin * CFL_global)

@@ -32,3 +32,6 @@ Manifest.toml
 
 # grids
 *.ufoam
+
+# logs
+*.log
