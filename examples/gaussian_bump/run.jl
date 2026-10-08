@@ -47,7 +47,7 @@ record! = (solv, soln) -> begin
 end
 
 P = soln.P
-for nit = 1:1000
+for nit = 1:3000
     residuals = solve!(solv, soln)
     turb_residuals = solve_turb!(solv, soln)
 
