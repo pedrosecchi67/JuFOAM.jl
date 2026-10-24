@@ -67,6 +67,7 @@ module JuFOAM
         projections::AbstractMatrix{Tf}
         images::AbstractMatrix{Tf}
         distances::AbstractVector{Tf}
+        areas::AbstractVector{Tf}
         η::AbstractVector{Tf}
         normals::AbstractMatrix{Tf}
         image_interpolator::Accumulator
@@ -78,7 +79,7 @@ module JuFOAM
     Constructor for a boundary
     """
     function Boundary(
-        cell_centers::AbstractMatrix{Tf}, tree::KDTree, face_centers::AbstractMatrix{Tf},
+        cell_centers::AbstractMatrix{Tf}, tree::KDTree, face_centers::AbstractMatrix{Tf}, face_areas::AbstractVector{Ti},
         projections::AbstractMatrix{Tf},
         indices::AbstractVector{Ti},
         image_points::AbstractMatrix{Tf},
@@ -102,10 +103,12 @@ module JuFOAM
             first_index = true, linear = true, k = n_neighbors
         ) # interpolator to image points
 
+        areas = face_areas[indices, :]
+
         Boundary{Tf, Ti}(
             indices,
             projections, image_points,
-            distances, η, normals, interpolator,
+            distances, areas, η, normals, interpolator,
         )
     end
 
@@ -448,7 +451,7 @@ module JuFOAM
         let tree = KDTree(centers')
             for (fname, family) in families
                 boundaries[fname] = Boundary(
-                    centers, tree, face_centers,
+                    centers, tree, face_centers, face_areas,
                     _boundary_info(family, centers, # use op. overloading to get bdry info
                         face_owners, face_neighbors,
                         face_centers, face_normals)...
