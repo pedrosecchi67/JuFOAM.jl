@@ -104,7 +104,7 @@ module JuFOAM
             first_index = true, linear = true, k = n_neighbors
         ) # interpolator to image points
 
-        areas = face_areas[indices, :]
+        areas = face_areas[indices]
 
         Boundary{Tf, Ti}(
             indices,
