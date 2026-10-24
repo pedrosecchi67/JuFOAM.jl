@@ -79,7 +79,8 @@ module JuFOAM
     Constructor for a boundary
     """
     function Boundary(
-        cell_centers::AbstractMatrix{Tf}, tree::KDTree, face_centers::AbstractMatrix{Tf}, face_areas::AbstractVector{Ti},
+        cell_centers::AbstractMatrix{Tf}, tree::KDTree, 
+        face_centers::AbstractMatrix{Tf}, face_areas::AbstractVector{Tf},
         projections::AbstractMatrix{Tf},
         indices::AbstractVector{Ti},
         image_points::AbstractMatrix{Tf},
