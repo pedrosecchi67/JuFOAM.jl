@@ -193,6 +193,9 @@ msh2 = PolyhedralMesh(
 msh = PolyhedralMesh(
     msh1, msh2; tolerance = 1f-7 # for point and face merging
 ) # if tolerance = 0 (default), no point merging is performed
+
+# patch faces in family/families with directly coinciding centroids:
+patch_faces!(msh, "merge_fam1", "merge_fam2")
 ```
 
 3D polyhedral meshes may also be read from CGNS (HDF5 serialization):

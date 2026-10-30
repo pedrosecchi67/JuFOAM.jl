@@ -4,14 +4,15 @@ include("cgnsreader.jl")
 using .CGNSReader
 
 export PolyhedralMesh,
-    set_boundary_projections!,
-    set_image_distances!,
+    set_boundary_projections!, set_image_distances!,
+    patch_faces!,
     face_information, boundary_information,
     vtk_grid, vtk_save, vtk_multiblock
 
 using DocStringExtensions
 
 using LinearAlgebra
+using NearestNeighbors
 
 """
 $TYPEDSIGNATURES
@@ -691,6 +692,91 @@ Read CGNS file to polyhedral mesh
 """
 PolyhedralMesh(cgns_file::String) = let nt = read_cgns(cgns_file)
     PolyhedralMesh(nt.points, nt.faces, nt.cells, nt.families)
+end
+
+"""
+$TYPEDSIGNATURES
+
+Patch faces with coinciding centroids in a family and remove said family
+from the mesh.
+For each orphan face, find the closest face centroid and merge the faces accordingly.
+Note that faces must roughly coincide in order for the patching to be meaningful.
+"""
+function patch_faces!(msh::PolyhedralMesh{Tf, Ti}, families::String...) where {Tf, Ti}
+    # obtain face indices for merging and pop families from registry
+    merged_faces = map(
+        f -> pop!(msh.families, f, nothing), families
+    )
+    if any(isnothing, merged_faces)
+        error("One or more specified families do not exist in the mesh.") |> throw
+    end
+    merged_faces = reduce(vcat, merged_faces)
+
+    # remove other BC info
+    for fam in families
+        haskey(msh.image_point_offsets, fam) && delete!(msh.image_point_offsets, fam)
+        haskey(msh.boundary_projections, fam) && delete!(msh.boundary_projections, fam)
+    end
+
+    # define face centroids
+    face_mask = trues(length(msh.faces))
+    merged_face_centers = let M = Matrix{Tf}(
+        undef, size(msh.points, 2), length(merged_faces)
+    )
+        for (i, f) in enumerate(merged_faces)
+            M[:, i] .= 0
+            for j in msh.faces[f]
+                M[:, i] .+= msh.points[j, :]
+            end
+            M[:, i] ./= length(msh.faces[f])
+        end
+        M
+    end
+    new_indices = copy(merged_faces)
+
+    # find nearest face, flag found faces to be removed
+    let tree = KDTree(merged_face_centers)
+        for (i, f) in enumerate(merged_faces)
+            if face_mask[f]
+                idxs = knn(tree, merged_face_centers[:, i], 2)[1]
+                j = (
+                    idxs[1] == i ? idxs[2] : idxs[1]
+                )
+
+                fnearest = merged_faces[j]
+
+                if !face_mask[fnearest]
+                    error("Face patching found two faces connecting to the same nearest face") |> throw
+                end
+
+                face_mask[fnearest] = false
+                new_indices[j] = f
+            end
+        end
+    end
+
+    # re-index according to removals
+    index_key = Ti.(cumsum(face_mask))
+
+    for (face, new_face) in zip(merged_faces, new_indices)
+        if !face_mask[face]
+            index_key[face] = index_key[new_face] 
+        end
+    end
+
+    # remove faces
+    let delete_indices = findall(!, face_mask)
+        deleteat!(msh.faces, delete_indices)
+    end
+
+    # re-index faces in cells and families
+    for cell in msh.cells
+        cell .= index_key[cell]
+    end
+    
+    for indices in values(msh.families)
+        indices .= index_key[indices]
+    end
 end
 
 end
