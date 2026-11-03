@@ -60,7 +60,9 @@ module GPULoops
             function $(esc(func_name))($(func_args...))
                 reference = _first_array($(func_args...))
                 backend = KernelAbstractions.get_backend(reference)
-                groupsize = KernelAbstractions.isgpu(backend) ? 256 : 1024
+                groupsize = (
+                    (backend isa POCLBackend) ? 1024 : 256
+                )
                 kernel! = $(Symbol(func_name, "_kernel!"))(backend, groupsize)
                 kernel!($(func_args...); ndrange = size(reference))
                 synchronize(backend)
