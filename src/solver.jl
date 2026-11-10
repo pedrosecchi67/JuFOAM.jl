@@ -29,7 +29,8 @@ Where `Q` is the state variable vector,
 `f` is a function that returns its desired, fixed-point-iteration values,
 and `ω` is a relaxation coefficient or array of relaxation coefficients.
 
-Returns residual L2 norm reduction ratio.
+Returns residual L2 norm reduction ratio and number of iterations performed
+on the first multigrid level.
 
 If many multigrid levels are given, provide an array of coarseners and an
 array of prolongators. They must be callables such that `coarseners[i](x)`
@@ -56,6 +57,7 @@ function FAS!(
     r = fQ .+ source
     nr0 = norm(r)
     nr = nr0
+    nit = 0
 
     for _ = 1:n_cycles
         if length(coarseners) > 1
@@ -80,6 +82,7 @@ function FAS!(
 
         bcycle = false # should we break the multigrid cycles?
         for _ = 1:n_iter
+            nit += 1
             r, ω = f(l, Q)
             @. r += source
             @. Q += clamp(ω, 0.0f0, 1.0f0) * r
@@ -96,7 +99,7 @@ function FAS!(
         end
     end
 
-    nr / (nr0 + eps(typeof(nr0)))
+    nr / (nr0 + eps(typeof(nr0))), nit
 end
 
 end
