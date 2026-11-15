@@ -1128,12 +1128,7 @@ module JuFOAM
         )
     ] |> sum
 
-    """
-    $TYPEDSIGNATURES
-
-    Minmod operator
-    """
-    @inline minmod(u1::Real, u2::Real) = (sign(u1) + sign(u2)) / 2 * min(abs(u1), abs(u2))
+    @inline _sign(u::Real) = (u >= 0) * 2 - 1
 
     """
     $TYPEDSIGNATURES
@@ -1163,29 +1158,37 @@ module JuFOAM
         xo = at_owners(dom, dom.centers)
         xn = at_neighbors(dom, dom.centers)
 
-        bu = similar(uo)
-        bu .= 0
-        for (du, xxo, xxf) in zip(
-            ∇uo, eachcol(xo), eachcol(xf)
-        )
-            @. bu += du * (xxf - xxo)
+        ϕo, ϕn = begin
+            grado = similar(uo)
+            grado .= 0
+            gradn = similar(un)
+            gradn .= 0
+
+            for (duo, dun, xxo, xxn) in zip(
+                ∇uo, ∇un, eachcol(xo), eachcol(xn)
+            )
+                @. grado += duo * (xxn - xxo)
+                @. gradn += dun * (xxn - xxo)
+            end
+
+            du = @. un - uo
+            @. du += _sign(du) * 1f-14
+
+            ϕo = @. clamp(2 * grado / du - 1, 0, 1)
+            ϕn = @. clamp(2 * gradn / du - 1, 0, 1)
+
+            (ϕo, ϕn)
         end
 
-        fu = similar(uo)
-        fu .= 0
-        for (du, xxf, xxn) in zip(
-            ∇un, eachcol(xf), eachcol(xn)
+        uL = uo
+        uR = un
+
+        for (duo, dun, xxo, xxn, xxf) in zip(
+            ∇uo, ∇un, eachcol(xo), eachcol(xn), eachcol(xf)
         )
-            @. fu += du * (xxn - xxf)
+            @. uL += ϕo * duo * (xxf - xxo)
+            @. uR += ϕn * dun * (xxf - xxn)
         end
-
-        @. bu = 2 * bu - (un - uo) / 2
-        @. fu = 2 * fu - (un - uo) / 2
-
-        grad = @. minmod(bu, fu)
-
-        uL = @. uo + grad
-        uR = @. un - grad
 
         if !isnothing(D)
             Df = max.(
