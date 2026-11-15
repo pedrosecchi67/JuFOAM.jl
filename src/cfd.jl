@@ -450,61 +450,50 @@ module CFD
     """
     $TYPEDSIGNATURES
 
-    Obtain HLL inviscid fluxes given primitive variables on the left and right sides
+    Obtain CUSP inviscid fluxes given primitive variables on the left and right sides
     of a face.
 
     `dim` may be a dimension index for Cartesian grids, or a matrix indicating the face normal
     direction (each row a face).
     """
     function inviscid_fluxes(
-        fluid::Fluid, PL::AbstractMatrix, PR::AbstractMatrix, dim::Union{AbstractMatrix, Number}
+        fluid::Fluid, PL::AbstractMatrix, PR::AbstractMatrix, dim::Union{AbstractMatrix, Number};
+        a0::Real = 0.25f0,
     )
-        QL = primitive2state(fluid, PL)
-        FL = copy(QL)
+        P = @. (PL + PR) / 2
+        u = (
+            dim isa Number ?
+            (@view P[:, 2 + dim]) : (sum(dim .* P[:, 3:end]; dims = 2) |> vec)
+        )
+        T = @view P[:, 2]
+        a = speed_of_sound(fluid, T)
+
+        M = @. u / a
+
+        a1 = 1.5f0 - 2 * a0
+        a2 = a0 - 0.5f0
+
+        f1 = @. (a0 + a1 * M ^ 2 + a2 * M ^ 4) * (abs(M) < 1.0) + abs(M) * (abs(M) >= 1)
+        f2 = @. (M * (3.0f0 - M ^ 2) / 2) * (abs(M) < 1.0) + sign(M) * (abs(M) >= 1)
+
+        UL = primitive2state(fluid, PL)
+        UR = primitive2state(fluid, PR)
+        UL[:, 2] .+= PL[:, 1]
+        UR[:, 2] .+= PR[:, 1] # add pressure to form enthalpy
+
         pL = @view PL[:, 1]
-        FL[:, 2] .+= pL # pressure parcel
-
-        TL = @view PL[:, 2]
-        uL = (
-            dim isa Number ?
-            (@view PL[:, 2 + dim]) : (sum(dim .* PL[:, 3:end]; dims = 2) |> vec)
-        )
-        aL = speed_of_sound(fluid, TL)
-        FL .*= uL
-
-        if dim isa Number
-            Fmom = @view FL[:, 2 + dim]
-            @. Fmom += pL
-        else
-            Fmom = @view FL[:, 3:end]
-            @. Fmom += pL * dim
-        end
-
-        QR = primitive2state(fluid, PR)
-        FR = copy(QR)
         pR = @view PR[:, 1]
-        FR[:, 2] .+= pR # pressure parcel
 
-        TR = @view PR[:, 2]
-        uR = (
-            dim isa Number ?
-            (@view PR[:, 2 + dim]) : (sum(dim .* PR[:, 3:end]; dims = 2) |> vec)
-        )
-        aR = speed_of_sound(fluid, TR)
-        FR .*= uR
+        F = @. (UL + UR) / 2 * u - f1 * (UR - UL) * a / 2
 
+        Fp = @. (pL + pR) / 2 - (pR - pL) * f2 / 2
         if dim isa Number
-            Fmom = @view FR[:, 2 + dim]
-            @. Fmom += pR
+            F[:, 2 + dim] .+= Fp
         else
-            Fmom = @view FR[:, 3:end]
-            @. Fmom += pR * dim
+            F[:, 3:end] .+= Fp .* dim
         end
 
-        SR = @. min(uR - aR, 0.0)
-        SL = @. max(uL + aL, 0.0)
-
-        @. (SL * FL - SR * FR + SR * SL * (QR - QL)) / (SL - SR)
+        F
     end
 
     """
