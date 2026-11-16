@@ -1131,6 +1131,25 @@ module JuFOAM
     @inline _sign(u::Real) = (u >= 0) * 2 - 1
 
     """
+    Module containing various flux limiters
+    """
+    module Limiters
+        export minmod, van_leer, hcus, hquick, osher, ospre, superbee, sweby, 
+            van_albada1, van_albada2
+        @inline minmod(r::Real) = max(0, min(1, r))
+        @inline van_leer(r::Real) = (r + abs(r)) / (1 + abs(r))
+        @inline hcus(r::Real) = 1.5f0 * (r + abs(r)) / (abs(r) + 2)
+        @inline hquick(r::Real) = 2 * (r + abs(r)) / (3 + abs(r))
+        @inline osher(r::Real, β::Real = 1.5f0) = max(0, min(1, β * r))
+        @inline ospre(r::Real) = 1.5f0 * (r ^ 2 + r) * (r >= 0) / (r ^ 2 + abs(r) + 1)
+        @inline superbee(r::Real) = max(0, min(2 * r, 1), min(r, 2))
+        @inline sweby(r::Real, β::Real = 1.5f0) = max(0, min(β * r, 1), min(r, β))
+        @inline van_albada1(r::Real) = (r ^ 2 + r) / (r ^ 2 + 1) * (r >= 0)
+        @inline van_albada2(r::Real) = (2 * r) / (r ^ 2 + 1) * (r >= 0)
+    end
+    using .Limiters
+
+    """
     $TYPEDSIGNATURES
 
     Obtain MUSCL reconstruction at faces.
@@ -1138,7 +1157,7 @@ module JuFOAM
     From cell data and cell gradients (tuple as returned
     by `gradient(dom, u)`), obtain `uL, uR` at left and right
     sides of faces.
-    Uses minmod limiter.
+    Defaults to the van-Leer limiter (see `JuFOAM.Limiters.van_leer`).
 
     Artificial dissipation sensor `D` at cells may be given
     so that `D = 1` corresponds to MUSCL reconstruction, and `D = 0`,
@@ -1147,6 +1166,7 @@ module JuFOAM
     function MUSCL(
         dom::Domain, u::AbstractArray, ∇u::Tuple;
         D::Union{AbstractArray, Nothing} = nothing,
+        limiter = Limiters.van_leer,
     )
         ∇uo = map(du -> at_owners(dom, du), ∇u)
         ∇un = map(du -> at_neighbors(dom, du), ∇u)
@@ -1174,8 +1194,8 @@ module JuFOAM
             du = @. un - uo
             @. du += _sign(du) * 1f-14
 
-            ϕo = @. clamp(2 * grado / du - 1, 0, 1)
-            ϕn = @. clamp(2 * gradn / du - 1, 0, 1)
+            ϕo = @. limiter(2 * grado / du - 1)
+            ϕn = @. limiter(2 * gradn / du - 1)
 
             (ϕo, ϕn)
         end

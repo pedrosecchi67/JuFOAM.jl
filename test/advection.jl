@@ -48,7 +48,7 @@ begin
                 
                 uL, uR = let ∇u = gradient(dom, uf)
                     ν = JST_sensor(dom, u)
-                    MUSCL(dom, u, ∇u; D = ν)
+                    MUSCL(dom, u, ∇u; limiter = superbee, D = ν)
                 end
             end
 
@@ -82,12 +82,12 @@ begin
 
         ud, dt = residual(cdom, u; low_order = l > 0)
 
-        (ud .* dt, 0.5f0)
+        (ud .* dt, 0.25f0)
     end
 
     u = zeros(length(dom))
 
-    for nit = 1:20
+    for nit = 1:40
         println("Iteration $nit..")
 
         FAS!(

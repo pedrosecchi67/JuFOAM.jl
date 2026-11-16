@@ -209,6 +209,8 @@ msh = PolyhedralMesh(
 ## Residual calculation and BC imposition
 
 ```julia
+using JuFOAM.Limiters
+
 u = rand(length(dom), 5) # arbitrary tensor
 uw = rand(length(dom, "wall"), 5) # its values at a family
 
@@ -291,6 +293,9 @@ pdom(r, u, "wall" => uw) do dom, r, u, (bname, uw)
 
     # store residuals in-place:
     r .= laplacian_u
+
+    # MUSCL reconstruction at faces:
+    uL, uR = MUSCL(u, grad_u; limiter = Limiters.van_leer)
 
     ; # be careful not to accidentally transport vector parts around as return values
 end
