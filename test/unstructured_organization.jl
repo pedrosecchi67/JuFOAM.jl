@@ -30,6 +30,8 @@ begin
 
     d = wall_distances(dom, "surface")
 
+    ensure_dir("unstructured_test")
+
     vtk = vtk_grid("unstructured_test/volume", msh)
     vtk["u"] = u
     vtk["p"] = p

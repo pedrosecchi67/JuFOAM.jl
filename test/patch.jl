@@ -97,6 +97,8 @@ begin
         ν .= JST_sensor(dom, u)
     end
 
+    ensure_dir("patch")
+
     vtk = vtk_grid("patch/volume", msh)
     vtk["u"] = u
     vtk["JST"] = ν

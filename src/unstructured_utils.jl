@@ -4,7 +4,7 @@ include("cgnsreader.jl")
 using .CGNSReader
 
 export PolyhedralMesh,
-    set_boundary_projections!, set_image_distances!,
+    set_boundary_projections!, set_image_points!,
     patch_faces!,
     face_information, boundary_information,
     vtk_grid, vtk_save, vtk_multiblock
@@ -25,7 +25,7 @@ struct PolyhedralMesh{Tf <: AbstractFloat, Ti <: Integer}
     cells::AbstractVector{Vector{Ti}}
     families::Dict{String, AbstractVector}
     boundary_projections::Dict{String, AbstractMatrix}
-    image_point_offsets::Dict{String, AbstractVector}
+    image_points::Dict{String, AbstractMatrix}
 
     function PolyhedralMesh{Tf, Ti}(
         points::AbstractMatrix{Tf},
@@ -35,7 +35,7 @@ struct PolyhedralMesh{Tf <: AbstractFloat, Ti <: Integer}
     ) where {Tf <: AbstractFloat, Ti <: Integer}
         new(points, faces, cells, families,
             Dict{String, AbstractMatrix}(),
-            Dict{String, AbstractVector}())
+            Dict{String, AbstractMatrix}())
     end
 end
 
@@ -380,14 +380,14 @@ end
 """
 $TYPEDSIGNATURES
 
-Set image point distances to boundary for immersed boundary family.
-Gets name of pre-existing family and vector of distances between each image point
+Set image points for immersed boundary family.
+Gets name of pre-existing family and matrix of image points (one row per point)
 and the boundary.
 """
-function set_image_distances!(
-    mesh::PolyhedralMesh{Tf, Ti}, fname::String, distances::AbstractVector{Tf}
+function set_image_points!(
+    mesh::PolyhedralMesh{Tf, Ti}, fname::String, points::AbstractMatrix{Tf}
 ) where {Tf, Ti}
-    mesh.image_point_offsets[fname] = copy(distances)
+    mesh.image_points[fname] = copy(points)
 end
 
 """
@@ -530,11 +530,11 @@ function boundary_information(
 
     for (fname, family) in msh.families
         if haskey(msh.boundary_projections, fname)
-            if haskey(msh.image_point_offsets, fname)
+            if haskey(msh.image_points, fname)
                 family = (
                     family,
                     msh.boundary_projections[fname],
-                    msh.image_point_offsets[fname]
+                    msh.image_points[fname]
                 )
             else
                 family = (

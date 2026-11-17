@@ -26,6 +26,8 @@ begin
         uc = prolongators[i](uc)
     end
 
+    ensure_dir("multigrid")
+
     vtk = vtk_grid("multigrid/volume", msh)
     vtk["u"] = u
     vtk["uc"] = uc

@@ -66,6 +66,8 @@ begin
         partid .= dom.part_index
     end
 
+    ensure_dir("dissipation")
+
     vtk = vtk_grid("dissipation/volume", msh)
     vtk["u"] = u
     vtk["partid"] = partid

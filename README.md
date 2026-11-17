@@ -153,10 +153,10 @@ set_boundary_projections!(
     face_center_projections # matrix, each row a face
 )
 
-set_image_distances!(
+set_image_points!(
     msh,
     "family_name",
-    image_point_distances # vector with distances between boundary and image points
+    image_points # matrix, each row an image point for a face
 )
 ```
 

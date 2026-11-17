@@ -242,9 +242,9 @@ module JuFOAM
     )
         indices = copy(family[1])
         projections = copy(family[2])
-        distances = nothing # optional third tuple entry: distance to image point
+        images = nothing # optional third tuple entry: image points
         if length(family) == 3
-            distances = copy(family[3])
+            images = copy(family[3])
         elseif length(family) != 2
             error("Unrecognized length for family-defining tuple") |> throw
         end
@@ -256,12 +256,12 @@ module JuFOAM
         face_distances = sqrt.(
             sum(normals .^ 2; dims = 2) .+ 1f-14
         )
-        if isnothing(distances)
-            distances = face_distances .* 2
-        end
         normals ./= face_distances
 
-        images = @. projections + distances * normals
+        if isnothing(images)
+            # default image point: twice the distance from projection along normal
+            images = @. projections + face_distances * normals * 2
+        end
 
         # interpolation from nearby stencil
         n_neighbors = min(
@@ -303,7 +303,7 @@ module JuFOAM
         "ib_with_distance" => (
             ib_faces2,
             ib_face_projections2,
-            ib_image_point_distances # vector of floats
+            ib_image_points # matrix, each row an image point
         )
     )
     ```

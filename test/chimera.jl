@@ -77,6 +77,8 @@ begin
         @. u += dt * ud
     end
 
+    ensure_dir("chimera")
+
     vtk = vtk_grid("chimera/volume", msh)
     vtk["u"] = u
     vtk_save(vtk)

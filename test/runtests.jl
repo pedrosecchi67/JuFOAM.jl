@@ -8,15 +8,17 @@ using Distributed
 
 include("memprofile.jl")
 
-#=
+function ensure_dir(dname::String)
+    if !isdir(dname)
+        mkdir(dname)
+    end
+end
+
 include("unstructured_organization.jl")
 include("multigrid.jl")
 include("backend_conversion.jl")
-=#
 include("advection.jl")
-#=
 include("dissipation.jl")
 include("memory.jl")
 include("chimera.jl")
 include("patch.jl")
-=#

@@ -103,6 +103,8 @@ begin
         ν .= JST_sensor(dom, u)
     end
 
+    ensure_dir("advection")
+
     vtk = vtk_grid("advection/volume", msh)
     vtk["u"] = u
     vtk["JST"] = ν
