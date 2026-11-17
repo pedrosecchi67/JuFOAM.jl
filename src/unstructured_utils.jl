@@ -714,7 +714,7 @@ function patch_faces!(msh::PolyhedralMesh{Tf, Ti}, families::String...) where {T
 
     # remove other BC info
     for fam in families
-        haskey(msh.image_point_offsets, fam) && delete!(msh.image_point_offsets, fam)
+        haskey(msh.image_points, fam) && delete!(msh.image_points, fam)
         haskey(msh.boundary_projections, fam) && delete!(msh.boundary_projections, fam)
     end
 
